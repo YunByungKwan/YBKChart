@@ -1,0 +1,13 @@
+*.apk
+*.iml
+.gradle
+local.properties
+.idea
+.DS_Store
+build
+app
+captures
+.externalNativeBuild
+/app/fabric.properties
+google-services.json
+keystore.jks
