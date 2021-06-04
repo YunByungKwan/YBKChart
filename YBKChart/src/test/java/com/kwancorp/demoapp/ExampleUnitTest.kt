@@ -1,4 +1,4 @@
-package com.kwancorp.ybkchart
+package com.kwancorp.demoapp
 
 import org.junit.Test
 

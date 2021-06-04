@@ -6,8 +6,11 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import com.kwancorp.ybkchart.data.Item
+import com.kwancorp.ybkchart.util.Constants
+import com.kwancorp.ybkchart.util.Utils
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -16,16 +19,6 @@ import kotlin.math.tan
 class PieChart @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-
-    companion object {
-        private const val PI: Float = 3.141592F
-        private const val RADIAN = PI / 180F
-        private const val CIRCLE_COLOR_DEFAULT = "#FF6096"
-        private const val SIDE_COLOR_DEFAULT = "#FF286A"
-        private const val BORDER_COLOR_DEFAULT = "#000000"
-        private const val STROKE_WIDTH_DEFAULT = 5F
-    }
-
     private var itemList = listOf<Item>()
 
     private val circleRectF = RectF()
@@ -41,18 +34,18 @@ class PieChart @JvmOverloads constructor(
 
     init {
         circlePaint.apply {
-            this.color = Color.parseColor(CIRCLE_COLOR_DEFAULT)
+            this.color = Color.parseColor(Constants.CIRCLE_COLOR_DEFAULT)
             this.style = Paint.Style.FILL
         }
 
         sidePaint.apply {
-            this.color = Color.parseColor(SIDE_COLOR_DEFAULT)
+            this.color = Color.parseColor(Constants.SIDE_COLOR_DEFAULT)
             this.style = Paint.Style.STROKE
         }
 
         borderPaint.apply {
-            this.color = Color.parseColor(BORDER_COLOR_DEFAULT)
-            this.strokeWidth = STROKE_WIDTH_DEFAULT
+            this.color = Color.parseColor(Constants.BORDER_COLOR_DEFAULT)
+            this.strokeWidth = Constants.STROKE_WIDTH_DEFAULT
             this.style = Paint.Style.STROKE
         }
 
@@ -74,6 +67,12 @@ class PieChart @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        val width = right - left
+        val height = bottom - top
+        if(height != width) {
+            throw IllegalArgumentException("PieChart width should be equal to height.")
+        }
+
         circleRectF.apply {
             this.left = 0F + pieHeight + (padding + borderPaint.strokeWidth)
             this.top = 0F + pieHeight + (padding + borderPaint.strokeWidth)
@@ -120,10 +119,10 @@ class PieChart @JvmOverloads constructor(
         var offset = 0F
         for(item in itemList) {
             val radius = (circleRectF.bottom - circleRectF.top) / 2F
-            val centerX = getCenterX(circleRectF)
-            val centerY = getCenterY(circleRectF)
-            val startX = centerX + (radius*2/3 * cos((offset + item.value/2) * RADIAN))
-            val startY = centerY + (radius*2/3 * sin((offset + item.value/2) * RADIAN))
+            val centerX = Utils.getCenterX(circleRectF)
+            val centerY = Utils.getCenterY(circleRectF)
+            val startX = centerX + (radius*2/3 * cos((offset + item.value/2) * Constants.RADIAN))
+            val startY = centerY + (radius*2/3 * sin((offset + item.value/2) * Constants.RADIAN))
             canvas?.drawText(item.title, startX, startY, textPaint)
 
             offset += item.value
@@ -132,9 +131,6 @@ class PieChart @JvmOverloads constructor(
 
     /** Fill the side of the pie chart with an arc. */
     private fun fillSideOfPieChartWithArc(canvas: Canvas?) {
-        sidePaint.apply {
-
-        }
         for(j in 0 until pieHeight.toInt()) {
             var offset = 0F
             for(item in itemList) {
@@ -146,15 +142,17 @@ class PieChart @JvmOverloads constructor(
                 this.bottom++
             }
         }
+        sideRectF.apply {
+            this.top -= pieHeight
+            this.bottom -= pieHeight
+        }
     }
 
     /** Draw the border of the side of the pie chart. */
     private fun drawBorderOfSideOfPieChart(canvas: Canvas?) {
         var offset = 0F
-        //val centerX = circleRectF.left + ((circleRectF.right - circleRectF.left) / 2F)
-        //val centerY = circleRectF.top + ((circleRectF.bottom - circleRectF.top) / 2F)
-        val centerX = getCenterX(circleRectF)
-        val centerY = getCenterY(circleRectF)
+        val centerX = Utils.getCenterX(circleRectF)
+        val centerY = Utils.getCenterY(circleRectF)
         val a = (circleRectF.right - circleRectF.left) / 2F
         val b = (circleRectF.bottom - circleRectF.top) / 2F
 
@@ -162,8 +160,8 @@ class PieChart @JvmOverloads constructor(
         canvas?.drawLine(circleRectF.right, centerY, circleRectF.right, centerY + pieHeight, borderPaint)
 
         for(item in itemList) {
-            val alpha = offset * RADIAN
-            val beta = (offset + item.value) * RADIAN
+            val alpha = offset * Constants.RADIAN
+            val beta = (offset + item.value) * Constants.RADIAN
 
             val alphaSign = if(offset in 90.0..270.0) -1F else 1F
             val betaSign = if(offset + item.value in 90.0..270.0) -1F else 1F
@@ -220,10 +218,6 @@ class PieChart @JvmOverloads constructor(
         }
     }
 
-    private fun getCenterX(circleRectF: RectF): Float = circleRectF.left + ((circleRectF.right - circleRectF.left) / 2F)
-
-    private fun getCenterY(circleRectF: RectF): Float = circleRectF.top + ((circleRectF.bottom - circleRectF.top) / 2F)
-
     /** Set the item of the pie chart. */
     fun setItems(list: MutableList<Item>) {
         var valueSum = 0F
@@ -236,31 +230,45 @@ class PieChart @JvmOverloads constructor(
         this.itemList = list
     }
 
+    /** Set the color of PieChart's top face. */
     fun setCircleColor(color: Int) {
         circlePaint.color = color
+        requestLayout()
     }
 
+    /** Set the color of PieChart's side face. */
     fun setSideColor(color: Int) {
         sidePaint.color = color
+        requestLayout()
     }
 
+    /** Set the width of PieChart's stroke. */
     fun setBorderWidth(stroke: Float) {
         borderPaint.strokeWidth = stroke
+        requestLayout()
     }
 
+    /** Set the color of PieChart's border. */
     fun setBorderColor(color: Int) {
         borderPaint.color = color
+        requestLayout()
     }
 
+    /** Set the size of PieChart's text. */
     fun setItemTextSize(size: Float) {
         textPaint.textSize = size
+        requestLayout()
     }
 
+    /** Set the color of PieChart's text. */
     fun setItemTextColor(color: Int) {
         textPaint.color = color
+        requestLayout()
     }
 
+    /** Set the height of PieChart. */
     fun setHeight(pieHeight: Float) {
         this.pieHeight = pieHeight
+        requestLayout()
     }
 }
