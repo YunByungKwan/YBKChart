@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.YunByungKwan:YBKChart:0.0.0'
+    implementation 'com.github.YunByungKwan:YBKChart:X.X.X'
 }
 ```
 <br>
