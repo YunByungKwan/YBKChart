@@ -5,7 +5,7 @@ For more information, see the [Wiki](https://github.com/YunByungKwan/YBKChart/wi
 <br>
 <br>
 
-## Chart List
+## Types of charts
 - [Pie Chart](#pie-chart)
 <br>
 
